@@ -89,3 +89,4 @@ UserRepository.java
 @Query(value = "select * from user where age = ?1", nativeQuery = true)
 List<User> myFindByAge(int age);
 
+ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
