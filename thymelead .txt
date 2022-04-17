@@ -1,0 +1,222 @@
+テンプレート　Thymeleaf 　メモ
+
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Hello Thymeleaf</title>
+    </head>
+    <body>
+        <h1 th:text="${message}"></h1>		←この th:text="${変数名}" がThymeleaf対応部分
+    </body>
+</html>
+
+
+◆[[【出力する値】]] で、 th:text を使わずに直接テンプレート上に値を出力することができる
+
+
+◆リテラル
+<!-- 文字列 -->
+<span th:text="'some text'"></span>
+<!-- 数値 -->
+<span th:text="123"></span>
+<!-- 真偽値 -->
+<span th:text="true"></span>
+<!-- null -->
+<span th:text="null"></span>
+
+
+◆文字連結
+<span th:text="'some text' + '!!'"></span>
+
+    + で文字列の連結が可能
+
+
+
+◆算術演算
+<span th:text="(30 * 20 + 10 / 5 - 1) % 3"></span>
+
+    *, /, +, '-', '%' が使用できる
+    意味は Java のと同じ感じ
+
+◆論理演算
+<span th:text="true
+                and false
+                or true
+                and not true
+                or !false"></span>
+
+    and または or が使用できる
+    not または ! で否定できる
+
+
+◆比較と等価
+    <, >, <=, >= が使用可能
+    それぞれ Java の演算子と同じ
+    ==, != は equals() を使った比較に置き換えられる（文字列の比較も可）
+
+
+
+◆条件演算子
+
+1: <span th:text="true　? 'a'"></span><br>
+2: <span th:text="false ? 'b'"></span><br>
+3: <span th:text="true  ? 'c': 'C'"></span><br>
+4: <span th:text="true　?: 'd'"></span><br>
+5: <span th:text="false ?: 'e'"></span><br>
+6: <span th:text="null　?: 'f'"></span><br>
+
+
+
+◆SpEL 式
+
+${...} の中は SpEL (Spring Expression Language)という式言語によって評価される。
+この SpEL を使うと、オブジェクトに簡潔にアクセスできる。
+
+
+●HelloController.java
+
+@Controller
+public class HelloController {
+
+    @GetMapping("/hello")
+    public String hello(Model model) {
+        model.addAttribute("hoge", new Hoge());
+        return "hello";
+    }
+    public static class Hoge {
+        public int publicField = 1;
+
+        public int publicMethod() {return 2;}
+
+        public int getPublicValue() {return 3;}
+    }
+}
+
+●xxx.html
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Hello Thymeleaf</title>
+    </head>
+    <body>
+        <div th:text="${hoge.publicField}"></div>
+        <div th:text="${hoge['publicField']}"></div>
+        <div th:text="${hoge.publicMethod()}"></div>
+        <div th:text="${hoge.publicValue}"></div>
+        <div th:text="${hoge['publicValue']}"></div>
+    </body>
+</html>
+
+
+    public なフィールドやメソッドなら直接参照が可能
+    getXxx() というメソッドなら、プロパティとして objectName.xxx でアクセスできる（メソッドが public である必要がある）
+    フィールドとプロパティなら objectName['名前'] のように角括弧で参照することも可能
+
+
+◆ハッシュマップとかマップを使う場合
+
+
+●HelloController.java
+@Controller
+public class HelloController {
+
+    @GetMapping("/hello")
+    public String hello(Model model) {
+        HashMap<String, String> map = new HashMap<>();
+        map.put("message", "Hello World!!");
+
+        model.addAttribute("map", map);
+        return "hello";
+    }
+}
+
+●xxx.html
+
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Hello Thymeleaf</title>
+    </head>
+    <body>
+        <div th:text="${map.message}"></div>
+        <div th:text="${map['message']}"></div>
+    </body>
+</html>
+
+◆リストの格納
+
+コントローラはリスト格納するだけ
+
+
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Hello Thymeleaf</title>
+    </head>
+    <body>
+        <div th:text="${list[0]}"></div>
+        <div th:text="${list[1]}"></div>
+        <div th:text="${list[2]}"></div>
+    </body>
+</html>
+
+
+◆属性に値を設定する
+
+
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Hello Thymeleaf</title>
+    </head>
+    <body>
+        <span th:class="'hello' + 'world'">hoge</span>		←class属性にhelloworldが入る
+    </body>
+</html>
+
+
+◆リンクURL
+
+    @{...} という式を使うと、コンテキストパスなどを上手く補完した形式でパスを構築できる
+
+種類 	説明
+foo/bar 	通常の相対パス
+/foo/bar 	コンテキストパスからの相対パス
+~/foo/bar 	サーバーのルートからの相対パス（/foo が他のコンテキストパスになる）
+http://xxx/xxx 	絶対パス
+//xxx/xxx 	プロトコル相対パス
+
+
+●xxx.html
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Hello Thymeleaf</title>
+    </head>
+    <body>
+        <ul>
+            <li>
+                @{foo/bar} = [[@{foo/bar}]]
+            </li>
+            <li>
+                @{/foo/bar} = [[@{/foo/bar}]]
+            </li>
+            <li>
+                @{~/foo/bar} = [[@{~/foo/bar}]]
+            </li>
+            <li>
+                @{http://localhost:8080/foo/bar} = [[@{http://localhost:8080/foo/bar}]]
+            </li>
+            <li>
+                @{//localhost:8080/foo/bar} = [[@{//localhost:8080/foo/bar}]]
+            </li>
+        </ul>
+    </body>
+</html>
+

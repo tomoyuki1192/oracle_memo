@@ -1,0 +1,31 @@
+
+
+DTO（Data Transfer Object）
+
+@RequestParamによる指定方法では、1 つ 1 つパラメーターを定義しないといけないため、手間かつ見にくいものになってしまします。
+
+これを解決するために、パラメーター名と同じ名前のフィールドにもつクラス（DTO）を作成します。 このときデフォルトコンストラクター（引数なしコンストラクター）とセッターを必ず作成してください。
+
+public class SampleDataParam {
+  String id;
+  String firstName;
+  String lastName;
+  int age;
+
+  public SampleDataParam(){
+  }
+}
+
+@RequestParamの指定の代わりに、DTO を指定します。 これにより、パラメーターと同名のフィールドに値が設定されたインスタンスが生成されます。
+
+@PostMapping
+public void create(SampleDataParam param) {
+  //...
+}
+
+int 型フィールドに"abcde"のような型変換できないパラメーターが渡された場合は、 HttpMessageNotReadableExceptionがスローされます。
+
+以下で説明しますが、引数にアノテーションを指定していない場合は、application/x-www-form-urlencodedで送信されたパラメーターが紐づきます。
+@ModelAttribute
+
+DTO にクエリパラメーターを紐づける場合は、@ModelAttributeを付与します。

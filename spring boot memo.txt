@@ -1,0 +1,290 @@
+◆java spring boot　構築
+
+①spring web
+②dev tool
+③ThymeLeaf template 追加
+
+maven が 3.8.5
+
+jdk ver 18
+
+mavenの過去のリポジトリ（キャッシュ）を全削除
+
+⇒実行確認できた(localhost:8080にて
+
+
+◆GETリクエストのアノテーション：@GetMapping
+@RequestMappingのGETリクエスト用のアノテーションが@GetMappingです。記述の省略と可読性の向上が目的です。
+
+◆POSTリクエストのアノテーション：@PostMapping
+@RequestMappingのPOSTリクエスト用のアノテーションが@PostMappingです。記述の省略と可読性の向上が目的です。
+
+◆RESTパラーメータの受取：@PathVaribable
+@PathVaribableは/books/1のようにREST形式のURLのパラメータ1を受け取るのに使います。value属性は省略でき、省略した場合は引数名をパラメータ名と解釈します。
+
+◆リクエストパラーメータの受取：@RequestParam
+@RequestParamは?order=priceのようにリクエストパラメータorderを受け取るのに使います。value属性は省略でき、省略した場合は引数名をパラメータ名と解釈します。
+
+◆RequestMappingのアクション前に実行：@ModelAttribute
+
+@ModelAttributeをメソッドにつけるとRequestMappingのアクションを実行する前にそのメソッドが呼び出されます。
+
+@GetMapping(value = "create")
+String create() {
+  // 2番目に実行
+}
+
+@ModelAttribute
+SomeForm setupForm() {
+  // 1番目に実行
+}
+
+@ModelAttributeはアクションの引数に付与することもできます。その場合は自動的に同名のフィールドにマッピングされ、リクエストスコープにも設定されます。
+
+◆バリデーション結果を格納：@BindingResult
+
+@BindingResultはメソッド引数として直前のフォームオブジェクトのバリデーション結果を格納します。@BindingResultはメソッドの引数の並び順をバリデーション対象の直後にすることが必須なので注意してください。
+
+◆リダイレクト先にオブジェクトを送る：RedirectAttributes
+RedirectAttributesはリダイレクト先にオブジェクトを送るのに使います。
+
+@PostMapping(value = "create")
+public String create(@Validated AbcForm form, BindingResult result, Model model, RedirectAttributes redirectAttributes) {
+    if (result.hasErrors()) {
+        return createRedo(form, model);
+    }
+    // データの登録処理..
+
+    redirectAttributes.addFlashAttribute("message", "新規レコードを作成しました")
+
+    return "redirect:/articles";
+}
+
+RedirectAttributesのaddFlashAttributeとaddAttributeメソッドを紹介します。
+メソッド 	説明
+①addFlashAttribute 	sessionでオブジェクトを送付するため、リダイレクト時に一度だけ有効なデータの受け渡し方になります
+②addAttribute 	URLパラメータでオブジェクトを送付するため、その後何度でも有効な文字列となります
+
+
+
+◆HTTPセッション属性
+
+@SessionAttributeアノテーションを指定すると、HTTPセッションに保存されている属性値を取得することができます
+
+◆クッキーパラメータ
+
+@CookieValueアノテーションを指定すると、クッキーパラメータを受け取ることができます。
+
+
+◆リクエストヘッダ
+@RequestHeaderアノテーションを指定すると、リクエストヘッダに含まれている各項目を受け取ることができます。
+
+◆リクエストボディー
+@RequestBodyアノテーションを指定すると、リクエストボディーの内容をそのまま取得することができます。
+
+@PostMapping("/hello")
+public String hello(@RequestBody String body) {
+
+※html側のフォームにちゃんとaction="POST"をいれること
+以下例
+
+		<form action="hello" method="post">
+	        User: <input type="text" name="user" size="20"><br />
+	        Password: <input type="text" name="password" size="20"><br />
+	        <input type="submit" value="Login">
+	    </form>
+	    
+	    helloメソッドの引数　bodyには「user=a&password=a」がくる
+	    分解したパラメータが欲しいときは@RequestParamを使う
+	    
+	    
+◆ModelAndView
+
+Model と View 名を持つクラスです。
+View に対して渡す Model も同時に返すことができます
+
+
+ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
+ログの出力方法
+
+①設定ファイル
+2.application.yml、 application.properties
+アプリケーションの定義ファイルに、ログの出力先、出力レベル等を定義します。前回作成したアプリでは.ymlを使用したので、以下のようなコードを記述します。
+
+logging:
+    file: logs/myapp.log
+    level:
+        org.springframework.web: INFO
+なお、.propertiesの場合は(実行してはいないが)以下のような書式となるようです。
+
+logging.file=logs/myapp.log
+logging.level.org.springframework.web=INFO
+
+②コード上
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@Controller
+public class SayHello {
+	Logger logger = LoggerFactory.getLogger(SayHello.class);
+	
+	
+-ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
+spring boot から oracle DB への接続
+
+①スターターから追加する
+Spring Data JDBC
+Spring Data JPA
+Oracle Driver
+
+②application.properties　に追記
+
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521:mydb
+spring.datasource.username=arai
+spring.datasource.password=hogehoge
+spring.datasource.driverClassName=oracle.jdbc.driver.OracleDriver
+
+上だと
+spring.datasource.url=jdbc:oracle:thin:@接続ＩＰ:接続ポート:データベース名
+spring.datasource.username=接続可能なユーザ
+spring.datasource.password=ユーザのパスワード
+
+③POM.xmlを確認、ない場合、下を追記
+		<dependency>
+			  <groupId>org.springframework.boot</groupId>
+			  <artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jdbc</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.oracle.database.jdbc</groupId>
+			<artifactId>ojdbc8</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+④テーブルに対応するEntityクラスを生成
+以下は[emp2]テーブルに対応する
+
+@Data
+@Entity
+@Table(name = "emp2")
+public class Emp2 {
+	@Id
+	@Column(name = "ID", nullable = false)
+	private Integer id;
+
+	@Column(name = "NAME", nullable = true)
+	private String name;
+
+}
+
+⑤あらかた実装してくれる　repositoryインターフェースを拡張する
+@Repository // (1)
+// (2) 扱うEntityクラスと主キーの型を指定
+public interface ContactRepository extends JpaRepository<Emp2, Integer> {
+}
+
+⑥コントローラ側で取得しVIEWに渡す場合
+	java側
+	        List<Emp2> list = contactRepository.findAll();
+	        model.addAttribute("Emp2List",list);
+
+	html側
+      <tr th:each="list : ${Emp2List}">
+        <td th:text="${list.id}"></td>
+        <td th:text="${list.name}"></td>
+      </tr>
+      
+      上のid,nameはjavaでの変数名に対応（テーブルの列名でなく）
+     
+⑦SQLをカスタムする場合
+import java.util.List;
+
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ContactRepository extends JpaRepository<Emp2, Integer> {
+
+    @Query("SELECT * FROM emp2 WHERE name = :name")
+    List<Emp2> getEmpByNameEquals(String name);
+}
+
+-----------------------------------------------------------------------------
+
+セッションを使う場合
+Spring BootでHTTPセッションを使う方法は3通りあるらしい。その時の備忘録φ(..)メモメモ
+
+    セッション属性(@SessionAttribute)をつかう
+    セッションスコープBeanをつかう
+    Http Sessionを直接つかう
+
+①
+セッション属性(@SessionAttribute)をつかう
+
+    同一Controller内で完結する場合は、セッション属性をつかう
+    セッション属性で指定したクラスのオブジェクトをHTTPセッション内で管理してくれる
+
+
+@SessionAttributes(types = UserForm.class)
+public class UserAddController {
+
+
+
+
+―――――――――――――――――――――――――――――――――――――――――
+
+リダイレクト
+
+  @RequestMapping(value = "/hoge", method = RequestMethod.GET)
+  public String hoge() {
+
+      return "redirect:/"; //ルートにリダイレクト
+      
+  }
+  
+  
+―――――――――――――――――――――――――――――――――――――――――
+DI　依存性注入
+DI（Dependency Injection）
+意味的には「オブジェクトの注入」と理解すれば良いです。
+クラスの外から依存性（オブジェクト）を注入してあげることで、クラス間の依存関係を解決するといった目的を持ちます。
+
+DIコンテナ
+DIを実現するためのフレームワークです。
+DIコンテナを経由してインスタンスを生成、管理します。
+クラスの依存関係を解決する以外にも、以下のような副次効果を得られます。
+
+・インスタンスのスコープ制御が出来る。
+　→毎回生成するか、シングルトンにするかなど
+・インスタンスのライフサイクルをイベント制御できる。
+　→生成時、破棄時のイベント処理など
+・共通処理を埋め込むことができる。
+・オブジェクト同士が疎結合になるため、テストがしやすくなる。
+Bean定義
+
+DIコンテナがインスタンスを管理するための設定ファイルを定義します。
+設定方法は3つあります。
+
+    XML
+    JavaConfig
+    アノテーション
+
+
+@Component
+注入するクラスに付けます。
+クラスに対してComponentアノテーションを付けると、そのクラスをDIコンテナが管理してくれるようになります。
+
+@ComponentScan
+Componentアノテーションを付けたクラスをDIコンテナに登録してくれるアノテーションです。
+ComponentScanアノテーションを付けたクラスと同じパッケージ以下のクラスをスキャンしてDIコンテナに登録します。
+
+@Autowired
+注入されるフィールドに付けます。
+DIコンテナはAutowiredアノテーションを付けたフィールドに対して、合致するオブジェクトを探してインジェクションします。

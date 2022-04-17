@@ -1,0 +1,98 @@
+oracle DB:
+root
+hogehoge21
+
+
+★Oracle Enterprise Manager Database Express URL: 
+https://localhost:5500/em
+
+user:SYSTEM
+PS:hogehoge21
+container:(無し)
+
+
+★SQLDevelopperは別個でインストールORZIP展開する必要あり
+
+
+◆データベースの新規作成
+管理者権限のコマンドプロンプトから
+dbca -J-Doracle.assistants.dbca.validate.ConfigurationParams=false
+
+新規作成データベース
+グローバルデータベース名:mydb.myhome
+SID:mydb
+
+https://localhost:5501/em
+
+EMからはユーザー追加不可（デフォルトで）。なのでSQLでコマンドを撃つ
+
+◆自作のデータベースに接続
+sqlplus ユーザ名/パス@データベース名
+sqlplus SYSTEM/hogehoge21@mydb
+
+
+◆ユーザ作成と接続権限付与（必須
+SQL> CREATE USER arai
+  2  IDENTIFIED BY hogehoge;
+
+ユーザーが作成されました。
+
+SQL> GRANT CREATE SESSION TO arai;
+
+権限付与が成功しました。
+
+◆OS認証で接続
+sqlplus / as sysdba
+
+◆テーブル作成権限付与
+SQL> GRANT CREATE TABLE TO arai;
+
+権限付与が成功しました。
+
+
+◆SYSDBA（システム権限付与） （SQLPLUS を管理者権限で実行必要)
+ grant sysdba to arai;
+
+⇒SYSOPER　はインスタンス起動停止も可能。SYSDBAの上位権限
+
+◆ 	表領域を作成する権限
+SQL> GRANT CREATE TABLESPACE to arai;
+権限付与が成功しました。
+	
+ALTER USER arai QUOTA UNLIMITED ON emp2;
+
+◆　権限確認
+
+SELECT * FROM user_sys_privs;
+-- または
+SELECT * FROM session_privs;
+-- または
+SELECT * FROM dba_sys_privs;
+
+
+ログインユーザが、付与されたオブジェクト権限
+SELECT * FROM USER_TAB_PRIVS;
+
+USER_TAB_PRIVS_MADE：ログインユーザが所有するオブジェクトに関するアクセス権限
+
+USER_TAB_PRIVS_RECD：ログインユーザに付与されているオブジェクト権限
+
+
+◆エラー対処
+
+①ORA-01950: 表領域'USERS'に対する権限がありません
+
+SQL> insert into emp2 VALUES(100, 'test');
+insert into emp2 VALUES(100, 'test')
+            *
+行1でエラーが発生しました。:
+ORA-01950: 表領域'USERS'に対する権限がありません
+
+⇒
+ALTER USER arai QUOTA UNLIMITED ON USERS;
+
+
+◆確認
+
+①テーブル定義確認　（SAMPLE_TABLEを確認
+SELECT * FROM ALL_TAB_COLUMNS WHERE TABLE_NAME = 'SAMPLE_TABLE';

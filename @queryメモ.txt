@@ -1,0 +1,91 @@
+@Queryメモ
+
+Repository上のメソッドに@Queryをつけると、メソッド命名規則からクエリを定義せず、クエリを文字列で直接定義できるようになります。
+
+public interface PhotoRepository extends JpaRepository<Photo, Integer> {
+  @Query(value = "select p from photo p where p.userId = 1") // JPQL
+  Iterator<Photo> findPhotosByUserId(int userId);
+}
+
+ただしデフォルトで定義できるのはJPQLと呼ばれる問い合わせ言語で、SQLではありません。そのため@Queryの引数に普通にSQLを記述してしまうとエラーとなってしまいます。
+
+SQLで実行するには、冒頭の通りnativeQuery = true をつけます。これでいつもどおりのSQLを使うことができます。
+
+ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+カスタムクエリ
+
+ルールというのは、メソッドの命名です。 決まったキーワードを組み合わせることで目的を満たすクエリが自動で生成されます。
+
+まず初めに目的を設定します。 上記はレコードの取得のためにfindByというキーワードを使用しました。 その他以下のキーワードがあります。
+
+キーワード	メソッドサンプル			説明
+findBy		findByName(String name)		条件に一致するレコードの取得
+existsBy	existsByName(String name)	条件に一致するレコードが存在するか（true/false）
+countBy		countByName(String name)	条件に一致するレコード数
+deleteBy	deleteByName(String name)	条件に一致するレコードの削除
+
+
+次に条件を設定します。 上記では、findByNameとすることで「nameと一致する」という条件を設定しています。 等価条件以外は、以下のキーワードを用いて設定できます。 複数フィールドを条件とする場合は、メソッドで指定したフィールド順序とパラメーターの順序を同じにします。
+キーワード									メソッドサンプル							クエリ
+Not											findByNameNot(String name)	... 			where name <> ?1
+And											findByNameAndAge(String name, int age)	... where name = ?1 and age = ?2
+Or											findByNameOrAge(String name, int age)	... where name = ?1 or age = ?2
+LessThan									findByAgeLessThan(int age)	... 			where age < ?1
+LessThanEqual								findByAgeLessThanEqual(int age)	... 		where age <= ?1
+GreaterThan									findByAgeGreaterThan(int age)	... 		where age > ?1
+GreaterThanEqual							findByAgeGreaterThanEqual(int age)	... 	where age <= ?1
+Between										findByAgeBetween(int min, int max)	... 	where age between ?1 and ?2
+IsNull										findByNameIsNull()	... 					where name is null
+IsNotNull									findByNameIsNotNull()	... 				where name is not null
+In											findByNameIn(String... name)	...			where name in ?1
+NotIn										findByNameNotIn(String... name)	... 		where name not in ?1
+Like										findByNameLike(String name)	... 			where name like ?1
+NotLike										findByNameNotLike(String name)	... 		wehre name not like ?1
+StartingWith								findByNameStartingWith(String name)	...		where name like ?1%
+EndingWith									findByNameEndingWith(String name)	... 	where name like %?1
+Containing									findByNameContaining(String name)	... 	where name like %?1%
+True										findByActiveTrue()	... 					where active = true
+False										findByActiveFalse()	... 					where active = false
+IgnoreCase									findByIdIgnoreCase(String id)	... where UPPER(id) = UPPER(?1)
+
+最後に取得する結果に対して手を加えます。 以下のキーワードを使用することで、並び替えや取得レコード数を指定することができます。
+キーワード			メソッドサンプル						説明
+OrderBy				findByNameOrderByAgeDesc(String name)	レコード順序の指定
+Top, First			findTop3ByName(String name)				指定した数だけ上位のレコードを取得（Top、Firstは同義）
+Distinct			findDistinctByName(String name)			同一結果のレコードの集約
+
+
+◆一口メモ
+public class Emp2 {
+	@Id
+	@Column(name = "ID", nullable = false)
+	Integer id;
+	//省略
+}
+の場合
+findById(Integer id);
+となる
+Entityベースなので変数の一番最初を大文字にするのが正しい
+
+
+ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+@Query
+
+もう 1 つの実装方法として、@Queryがあります。 @NamedQueryは Entity に付与しましたが、@Queryは Repository のメソッドに付与します。
+UserRepository.java
+
+@Query("select u from User u where u.age = ?1")
+List<User> myFindByAge(int age);
+
+メソッドパラメーターに@Paramを付与することで、名前付きパラメーターを使用することができます。
+UserRepository.java
+
+@Query("select u from User u where u.age = :age")
+List<User> myFindByAge(@Param("age") int age);
+
+また以下のようにnativeQueryプロパティを設定することで、JPQL ではなくネイティブなクエリを指定することができます。
+UserRepository.java
+
+@Query(value = "select * from user where age = ?1", nativeQuery = true)
+List<User> myFindByAge(int age);
+
